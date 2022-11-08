@@ -25,13 +25,13 @@ namespace Change_Line_Type
             Application app = uiapp.Application;
             Document doc = uidoc.Document;
 
-            IList<Element> detailLines = (IList<Element>)findAllDetailCurves(doc);
+            IEnumerable<Element> detailLines = (IList<Element>)FindAllDetailCurves(doc);
 
             return Result.Succeeded;
         }
 
         // get all detail lines in current models and report the graphic styles with TaskDialog
-        private static IEnumerable<Element> findAllDetailCurves(Document doc)
+        private static IEnumerable<Element> FindAllDetailCurves(Document doc)
         {
             // get all detail lines in current models
             CurveElementFilter filter_detail = new CurveElementFilter(CurveElementType.DetailCurve);
