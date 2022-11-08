@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Command">
+    <Text>Command Change Line Type</Text>
+    <Description>Some description for Change Line Type</Description>
+    <Assembly>Change Line Type.dll</Assembly>
+    <FullClassName>Change_Line_Type.Command</FullClassName>
+    <ClientId>94f479a4-6b27-4125-b51d-faf76ca18c0b</ClientId>
+    <VendorId>com.typepad.thebuildingcoder</VendorId>
+    <VendorDescription>The Building Coder, http://thebuildingcoder.typepad.com</VendorDescription>
+  </AddIn>
+  <AddIn Type="Application">
+    <Name>Application Change Line Type</Name>
+    <Assembly>Change Line Type.dll</Assembly>
+    <FullClassName>Change_Line_Type.App</FullClassName>
+    <ClientId>1e8eaec2-f585-45c9-8c54-ca4e44162be8</ClientId>
+    <VendorId>com.typepad.thebuildingcoder</VendorId>
+    <VendorDescription>The Building Coder, http://thebuildingcoder.typepad.com</VendorDescription>
+  </AddIn>
+</RevitAddIns>

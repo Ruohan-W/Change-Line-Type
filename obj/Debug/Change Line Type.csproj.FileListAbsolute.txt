@@ -1,0 +1,8 @@
+C:\Users\ruohan.wang\source\repos\Change Line Type\bin\Debug\Change Line Type.dll
+C:\Users\ruohan.wang\source\repos\Change Line Type\bin\Debug\Change Line Type.pdb
+C:\Users\ruohan.wang\source\repos\Change Line Type\obj\Debug\Change Line Type.csproj.AssemblyReference.cache
+C:\Users\ruohan.wang\source\repos\Change Line Type\obj\Debug\Change_Line_Type.Properties.Resources.resources
+C:\Users\ruohan.wang\source\repos\Change Line Type\obj\Debug\Change Line Type.csproj.GenerateResource.cache
+C:\Users\ruohan.wang\source\repos\Change Line Type\obj\Debug\Change Line Type.csproj.CoreCompileInputs.cache
+C:\Users\ruohan.wang\source\repos\Change Line Type\obj\Debug\Change Line Type.dll
+C:\Users\ruohan.wang\source\repos\Change Line Type\obj\Debug\Change Line Type.pdb
