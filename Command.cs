@@ -25,24 +25,29 @@ namespace Change_Line_Type
             Application app = uiapp.Application;
             Document doc = uidoc.Document;
 
-            IEnumerable<Element> detailLines = (IList<Element>)FindAllDetailCurves(doc);
+            IEnumerable<CurveElement> detailLines = (IEnumerable<CurveElement>)FindAllDetailCurves(doc).Item1;
+            IEnumerable<string> detailLineStyles = (IEnumerable<string>)FindAllDetailCurves(doc).Item2;
+
+            IEnumerable<CurveElement> targetedDetailCurve = FindDetailLinesWithIncorrectLineStyle(detailLines, detailLineStyles);
+
 
             return Result.Succeeded;
         }
 
         // get all detail lines in current models and report the graphic styles with TaskDialog
-        private static IEnumerable<Element> FindAllDetailCurves(Document doc)
+        private static (IEnumerable<CurveElement>, IEnumerable<string>) FindAllDetailCurves(Document doc)
         {
             // get all detail lines in current models
             CurveElementFilter filter_detail = new CurveElementFilter(CurveElementType.DetailCurve);
             IEnumerable<CurveElement> detailCurves = new FilteredElementCollector(doc)
                 .WherePasses(filter_detail)
-                .Cast<CurveElement>(); 
+                .Cast<CurveElement>();
+
+            IList<string> cStyleNameLst = new List<string>();
 
             if (detailCurves != null)
-            {
-                List<string> cStyleNameLst = new List<string>();
-
+            {             
+                // get all the Name of LineStyles
                 foreach (CurveElement l in detailCurves)
                 {
                     Element cStyle = l.LineStyle;
@@ -51,24 +56,13 @@ namespace Change_Line_Type
                     cStyleNameLst.Add(cStyleName);
                 };
 
-                string lineStyleNamesConcatenate = string.Join(", ", cStyleNameLst);
-
-                TaskDialog td = new TaskDialog("Success")
-                {
-                    Title = "Found detail lines",
-                    AllowCancellation = true,
-                    MainInstruction = "Collected all detail lines in the project",
-                    MainContent = $"name(s) of the {cStyleNameLst.Count} detail line(s) in the project: {lineStyleNamesConcatenate} ",
-                    MainIcon = TaskDialogIcon.TaskDialogIconInformation,
-                };
-                td.CommonButtons = TaskDialogCommonButtons.Ok;
-                td.Show();
-
-                return detailCurves;
+                // return all the collected detail curves
+                return (detailCurves, cStyleNameLst);
             }
             else
             {
-                TaskDialog td = new TaskDialog("Success")
+                // report that there is no detail curves in this project
+                TaskDialog td = new TaskDialog("Fail")
                 {
                     Title = "No detail lines found",
                     AllowCancellation = true,
@@ -79,10 +73,69 @@ namespace Change_Line_Type
                 td.CommonButtons = TaskDialogCommonButtons.Ok;
                 td.Show();
 
-                return null;
+                return (null, null);
             }
         }
+
+        // filter the line in the incorrect LineStyle
+        private static IEnumerable<CurveElement> FindDetailLinesWithIncorrectLineStyle(IEnumerable<CurveElement> curves, IEnumerable<string> lineStyles)
+        {
+            // declare detailCurves with incorrect LineStyle
+            IList<CurveElement> incorrectedCurve = new List<CurveElement>();
+            int count = 0;
+
+            var cS = curves.Zip(lineStyles, (x, y) => new Tuple<CurveElement, string>(x, y))
+                            .ToList();
+
+            foreach (var c in cS) 
+            {
+                string cStyle = c.Item2;
+                if (!cStyle.StartsWith("STM"))
+                {
+                    count++;
+                    incorrectedCurve.Add(c.Item1);
+                }
+            }
+
+            if (count != 0)
+            {
+                // report result with task dialog
+                TaskDialog td = new TaskDialog("Success")
+                {
+                    Title = "Incorrect line style",
+                    AllowCancellation = true,
+                    MainInstruction = "Retrive detail lines with incorrect line style",
+                    MainContent = $"{count} of {cS.Count} detail line(s) have incorrect line style.",
+                    MainIcon = TaskDialogIcon.TaskDialogIconInformation,
+                };
+                td.CommonButtons = TaskDialogCommonButtons.Ok;
+                td.Show();
+            }
+            else 
+            {
+                // report result with task dialog
+                TaskDialog td = new TaskDialog("Fail 002")
+                {
+                    Title = "None",
+                    AllowCancellation = true,
+                    MainInstruction = "No detail line with incorrect line style",
+                    MainContent = "",
+                    MainIcon = TaskDialogIcon.TaskDialogIconNone,
+                };
+                td.CommonButtons = TaskDialogCommonButtons.Ok;
+                td.Show();
+            }
+
+            // return detailCurves with incorrect LineStyle
+            IEnumerable<CurveElement> targetedDetailCurve = incorrectedCurve;
+            return targetedDetailCurve;
+        }
+
         // select lines whose name is not following the project standard by filtering the name of LineType.
+        // get the Style of all detail lines, 
+        // get the Line pattern of all detail lines
+        // get the Line color of all detail lines
+
         // change the the line types of selected lines
 
     }
