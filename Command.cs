@@ -209,13 +209,12 @@ namespace Change_Line_Type
                         cPatterName = cPattern.GetLinePattern().Name;
                     }
                 }
-
                 #region testing
                 // test see the data retrived
                 string name = $"line weight: {cWeight} - line color: {cColor.Red}, {cColor.Green}, {cColor.Blue} - {cPatterName}";
                 curveStyleNameLst.Add(name);
 
-                TaskDialog td = new TaskDialog("testing") 
+                TaskDialog td = new TaskDialog("testing")
                 {
                     Title = "retrive data of curves",
                     AllowCancellation = true,
@@ -228,28 +227,42 @@ namespace Change_Line_Type
                 td.Show();
                 #endregion
 
-                
-                /*
                 // give the proper name for the lines
-                if (cPatterName != "solid" & cColor != "R: 0; G: 0; B: 0")
-                {
-                    string cStyleName = $"STM-EP{cWeight}-{cPatterName}-{cColor}";
-                }
-                else if (cPatterName == "solid" & cColor != "R: 0; G: 0; B: 0")
-                {
-                    string cStyleName = $"STM-EP{cWeight}-{cColor}";
-                }
-                else if (cPatterName == "solid" & cColor == "R: 0; G: 0; B: 0")
-                {
-                    string cStyleName = $"STM-EP{cWeight}";
-                }
-                */
+
             }
             return curveStyleNameLst;
         }
-        
-        //
 
+        private static int TestIfBlackAndSolid(Autodesk.Revit.DB.Color cColor, string cPatterName)
+        {
+            int caseNum = 0;
+
+            // check whether the line is black
+            int isBlack = 1;
+            if (cColor.Red != 0 | cColor.Green != 0 | cColor.Blue != 0)
+            {
+                isBlack = 0;
+            }
+            // check whether the line is solid
+            int isSolid = 1;
+            if (cPatterName != "solid")
+            {
+                isSolid = 0;
+            }
+
+            caseNum = isBlack + isSolid + 1;
+
+            return caseNum;
+        }
+
+        int ColorDiff(Autodesk.Revit.DB.Color c1, Autodesk.Revit.DB.Color c2)
+        {
+            return (int)Math.Sqrt((c1.Red - c2.Red)^2
+                                   + (c1.Green - c2.Green)^2
+                                   + (c1.Blue - c2.Blue)^2);
+        }
+
+        /*
         // create line style following the nameing convention
         private static void CreateLineStyle(Document doc, string detailLineName,IList<byte> c, int detailLineWeight) 
         {
@@ -266,7 +279,7 @@ namespace Change_Line_Type
             lineCat.SetLineWeight(detailLineWeight, GraphicsStyleType.Projection);
         }
 
-        /*
+        
         // select lines whose name is not following the project standard by filtering the name of LineType.
         
         private static (string, string, string) compareCurveAttribute(IEnumerable<CurveElement> curve)
