@@ -7,6 +7,7 @@ using Autodesk.Revit.UI.Selection;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.Linq;
 #endregion
 
@@ -28,17 +29,21 @@ namespace Change_Line_Type
             // declare correct line style formate
             string lineStyleNamingConvention = "STM-EP";
 
-            /*
+            
             // retrive all detail lines and their line styles
             IEnumerable<CurveElement> detailLines = (IEnumerable<CurveElement>)FindAllDetailCurves(doc).Item1;
             IEnumerable<string> detailLineStyles = (IEnumerable<string>)FindAllDetailCurves(doc).Item2;
 
             // filter through all detail lines to retrive the ones with incorrect line style
             IEnumerable<CurveElement> targetedDetailCurve = FindDetailLinesWithIncorrectLineStyle(detailLines, detailLineStyles, lineStyleNamingConvention);
-            */
 
+            // test
+            IList<string> names = NameRequiredLineStyle(doc, targetedDetailCurve);
+
+            /*
             // get all avaliable graphic styles for detail lines that follow the naming convention
             IEnumerable<GraphicsStyle> existingTargetedGrpahicStyle = getAllCorrectGraphicStyle(doc, lineStyleNamingConvention);
+            */
 
             return Result.Succeeded;
         }
@@ -75,8 +80,8 @@ namespace Change_Line_Type
                 {
                     Title = "No detail lines found",
                     AllowCancellation = true,
-                    MainInstruction = "Zero detail line found",
-                    MainContent = "There is no detail lines in this project",
+                    MainInstruction = "Zero detail line",
+                    MainContent = "There is no detail lines in current project",
                     MainIcon = TaskDialogIcon.TaskDialogIconInformation,
                 };
                 td.CommonButtons = TaskDialogCommonButtons.Ok;
@@ -86,7 +91,7 @@ namespace Change_Line_Type
             }
         }
 
-        // filter the line in the incorrect LineStyle
+        // filter out the detail lines with the incorrect LineStyle
         private static IEnumerable<CurveElement> FindDetailLinesWithIncorrectLineStyle(IEnumerable<CurveElement> curves, IEnumerable<string> lineStyles, string lineStyleName)
         {
             // declare detailCurves with incorrect LineStyle
@@ -142,7 +147,7 @@ namespace Change_Line_Type
             return targetedDetailCurve;
         }
 
-        // collect all graphic styles that follows' standard. 
+        // collect all graphic styles that follows standard. 
         private static IEnumerable<GraphicsStyle> getAllCorrectGraphicStyle(Document doc, string lineStyleName)
         {
             IEnumerable<GraphicsStyle> targetedGraphicStyles = new FilteredElementCollector(doc)
@@ -174,6 +179,77 @@ namespace Change_Line_Type
             return targetedGraphicStyles;
         }
 
+        // test whether the needed line style is existing in the project
+        private static IList<string> NameRequiredLineStyle(Document doc, IEnumerable<CurveElement> curves)
+        {
+            // find the needed linestyle
+            IList<string> curveStyleNameLst = new List<string>();
+
+            foreach (CurveElement c in curves)
+            {           
+                string cWeight = null;
+                Autodesk.Revit.DB.Color cColor = null;
+                string cPatterName = null;
+
+                // get the graphic style of the curve
+                GraphicsStyle cG = (GraphicsStyle)c.LineStyle;
+                // retrive the line weigth
+                cWeight = cG.GraphicsStyleCategory.GetLineWeight(GraphicsStyleType.Projection).ToString();
+
+                // retrive the line color
+                cColor = cG.GraphicsStyleCategory.LineColor;
+
+                // retrive the line pattern
+                ElementId cPatternId = cG.GraphicsStyleCategory.GetLinePatternId(GraphicsStyleType.Projection);
+                if (cPatternId != null)
+                {
+                    LinePatternElement cPattern = doc.GetElement(cPatternId) as LinePatternElement;
+                    if (cPattern != null)
+                    {
+                        cPatterName = cPattern.GetLinePattern().Name;
+                    }
+                }
+
+                #region testing
+                // test see the data retrived
+                string name = $"line weight: {cWeight} - line color: {cColor.Red}, {cColor.Green}, {cColor.Blue} - {cPatterName}";
+                curveStyleNameLst.Add(name);
+
+                TaskDialog td = new TaskDialog("testing") 
+                {
+                    Title = "retrive data of curves",
+                    AllowCancellation = true,
+                    MainContent = $"{curveStyleNameLst[0]}",
+                    MainInstruction = "review the data below:",
+                    MainIcon = TaskDialogIcon.TaskDialogIconInformation,
+                };
+
+                td.CommonButtons = TaskDialogCommonButtons.Ok;
+                td.Show();
+                #endregion
+
+                
+                /*
+                // give the proper name for the lines
+                if (cPatterName != "solid" & cColor != "R: 0; G: 0; B: 0")
+                {
+                    string cStyleName = $"STM-EP{cWeight}-{cPatterName}-{cColor}";
+                }
+                else if (cPatterName == "solid" & cColor != "R: 0; G: 0; B: 0")
+                {
+                    string cStyleName = $"STM-EP{cWeight}-{cColor}";
+                }
+                else if (cPatterName == "solid" & cColor == "R: 0; G: 0; B: 0")
+                {
+                    string cStyleName = $"STM-EP{cWeight}";
+                }
+                */
+            }
+            return curveStyleNameLst;
+        }
+        
+        //
+
         // create line style following the nameing convention
         private static void CreateLineStyle(Document doc, string detailLineName,IList<byte> c, int detailLineWeight) 
         {
@@ -186,7 +262,7 @@ namespace Change_Line_Type
             Category lineStyleCat = cats.NewSubcategory(lineCat, detailLineName);
 
             // set the line weight and line color for the new line weight.
-            lineCat.LineColor = new Color(c[0], c[1], c[2]);
+            lineCat.LineColor = new Autodesk.Revit.DB.Color(c[0], c[1], c[2]);
             lineCat.SetLineWeight(detailLineWeight, GraphicsStyleType.Projection);
         }
 
