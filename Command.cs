@@ -61,8 +61,10 @@ namespace Change_Line_Type
             IEnumerable<CurveElement> targetedDetailCurve = FindDetailLinesWithIncorrectLineStyle(detailLines, detailLineStyles, lineStyleNamingConvention);
 
             //test
-            if (targetedDetailCurve.Any())
-            {
+            ICollection<CurveElement> targetedDetailCurvesCol = targetedDetailCurve as ICollection<CurveElement>;
+
+            if (targetedDetailCurvesCol.Any())
+            {           
                 NameRequiredLineStyle(doc, targetedDetailCurve, standardColorLst, standardColorNameLst);
             }
             
@@ -173,6 +175,7 @@ namespace Change_Line_Type
 
             // return detailCurves with incorrect LineStyle
             IEnumerable<CurveElement> targetedDetailCurve = incorrectedCurve;
+
             return targetedDetailCurve;
         }
 
@@ -211,7 +214,7 @@ namespace Change_Line_Type
         // test whether the needed line style is existing in the project
         private static IList<string> NameRequiredLineStyle(Document doc, IEnumerable<CurveElement> curves, IList<Autodesk.Revit.DB.Color> standarColorLst, IList<string> standarColorNameLst)
         {
-            // find the needed linestyle
+            // declare empty IList to stor the Name of curve style
             IList<string> curveStyleNameLst = new List<string>();
 
             // collect weight, color, and pattern of the curves
@@ -242,13 +245,15 @@ namespace Change_Line_Type
             #region test
             // zip everything together
             var zip = cWeightLst.Zip(cClosestColorNameLst, (cW, cC) => new { cW, cC }).Zip(cPatterNameLst, (t, cPN) => new { cWeight = t.cW, cColor = t.cC, cPatterName = cPN });
+            
+            
+
             // get the proper names
             foreach (var data in zip)
             {
                 string curveStyleName = $"STM-EP{data.cWeight}-{data.cColor}-{data.cPatterName}";
                 curveStyleNameLst.Add(curveStyleName);
             }
-            #endregion
 
             TaskDialog td = new TaskDialog("Testing")
             {
@@ -260,7 +265,7 @@ namespace Change_Line_Type
             };
             td.CommonButtons = TaskDialogCommonButtons.Ok;
             td.Show();
-
+            #endregion
 
             return curveStyleNameLst;
         }
@@ -288,13 +293,22 @@ namespace Change_Line_Type
 
                 // get name of the curve's pattern in string format
                 ElementId cPatternId = cG.GraphicsStyleCategory.GetLinePatternId(GraphicsStyleType.Projection);
-                if (cPatternId != null)
-                { 
+                if (cPatternId == null)
+                {
+                    Debug.WriteLine($"Alert: find null cPaternId !!!!!!!!!!!!!");
+                }
+                else
+                {
                     LinePatternElement cPattern = (LinePatternElement)doc.GetElement(cPatternId);
                     if (cPattern != null)
                     {
                         string cPatternName = cPattern.GetLinePattern().Name.ToUpper(); //last step is to convert the name to upper cases
                         cPatternNamesLst.Add(cPatternName);
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"Alert: find null cPaternName !!!!!!!!!!!!!");
+                        cPatternNamesLst.Add("SOLID");
                     }
                 }
             }
@@ -311,7 +325,7 @@ namespace Change_Line_Type
 
         private static int ClosestColorRGB(IList<Autodesk.Revit.DB.Color> colorLst, Autodesk.Revit.DB.Color targetColor) 
         {
-            List <int> colorDistanceList = new List<int>();
+            IList <int> colorDistanceList = new List<int>();
 
             foreach (Autodesk.Revit.DB.Color c in colorLst)
             {
@@ -320,12 +334,8 @@ namespace Change_Line_Type
                 colorDistanceList.Add(colorDistance);
             }
 
-            Debug.WriteLine(String.Join(", ", colorDistanceList));
-
-            int indexOfTheColoestColorInColorLst = colorDistanceList.IndexOf(colorDistanceList.Min());
-
-            Debug.WriteLine($"the index {indexOfTheColoestColorInColorLst}");
-            return indexOfTheColoestColorInColorLst;
+            int indexOfTheClosestColor = colorDistanceList.IndexOf(colorDistanceList.Min());
+            return indexOfTheClosestColor;
         }
 
         private static int TestIfBlackAndSolid(Autodesk.Revit.DB.Color cColor, string cPatterName)
