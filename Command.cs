@@ -33,14 +33,16 @@ namespace Change_Line_Type
 
             // standar line colors:
             // declare standar line color in Revit.DB.Color formate - the code below is STM color standard 
-            IList<Autodesk.Revit.DB.Color> standardColorLst = new List<Autodesk.Revit.DB.Color>();
-            standardColorLst.Add(new Autodesk.Revit.DB.Color(0, 0, 0)); //black
-            standardColorLst.Add(new Autodesk.Revit.DB.Color(240, 240, 240)); //grey
-            standardColorLst.Add(new Autodesk.Revit.DB.Color(255, 0, 0)); //red
-            standardColorLst.Add(new Autodesk.Revit.DB.Color(218, 0, 64)); //dark red
-            standardColorLst.Add(new Autodesk.Revit.DB.Color(65, 135, 64)); //green
-            standardColorLst.Add(new Autodesk.Revit.DB.Color(0, 153, 204)); //blue
-            standardColorLst.Add(new Autodesk.Revit.DB.Color(255, 204, 0)); //yellow
+            IList<Autodesk.Revit.DB.Color> standardColorLst = new List<Autodesk.Revit.DB.Color>
+            {
+                new Autodesk.Revit.DB.Color(0, 0, 0), //black
+                new Autodesk.Revit.DB.Color(240, 240, 240), //grey
+                new Autodesk.Revit.DB.Color(255, 0, 0), //red
+                new Autodesk.Revit.DB.Color(218, 0, 64), //dark red
+                new Autodesk.Revit.DB.Color(65, 135, 64), //green
+                new Autodesk.Revit.DB.Color(0, 153, 204), //blue
+                new Autodesk.Revit.DB.Color(255, 204, 0) //yellow
+            };
             // declare names of the standard line color
             IList<string> standardColorNameLst = new List<string> 
             {   "NOIR",
@@ -63,11 +65,26 @@ namespace Change_Line_Type
             //test
             ICollection<CurveElement> targetedDetailCurvesCol = targetedDetailCurve as ICollection<CurveElement>;
 
+            IList<string> NameLst = new List<string>();
+
             if (targetedDetailCurvesCol.Any())
-            {           
-                NameRequiredLineStyle(doc, targetedDetailCurve, standardColorLst, standardColorNameLst);
+            {
+                NameLst = NameRequiredLineStyle(doc, targetedDetailCurve, standardColorLst, standardColorNameLst, standardColorNameLst[0]);
             }
-            
+
+            NameLst = TrimString(NameLst, standardColorNameLst[0]);
+            NameLst = TrimString(NameLst, "SOLID");
+
+            TaskDialog td = new TaskDialog("Testing")
+            {
+                Title = "testing the modified name of the curves",
+                AllowCancellation = true,
+                MainInstruction = "review names below",
+                MainContent = $"{String.Join(Environment.NewLine, NameLst)}",
+                MainIcon = TaskDialogIcon.TaskDialogIconInformation,
+            };
+            td.CommonButtons = TaskDialogCommonButtons.Ok;
+            td.Show();
 
             /*
             // get all avaliable graphic styles for detail lines that follow the naming convention
@@ -106,18 +123,6 @@ namespace Change_Line_Type
             }
             else
             {
-                // report that there is no detail curves in this project
-                TaskDialog td = new TaskDialog("Fail")
-                {
-                    Title = "No detail lines found",
-                    AllowCancellation = true,
-                    MainInstruction = "Zero detail line",
-                    MainContent = "There is no detail lines in current project",
-                    MainIcon = TaskDialogIcon.TaskDialogIconInformation,
-                };
-                td.CommonButtons = TaskDialogCommonButtons.Ok;
-                td.Show();
-
                 return (null, null);
             }
         }
@@ -144,21 +149,7 @@ namespace Change_Line_Type
                 }
             }
 
-            if (count != 0)
-            {
-                // report result with task dialog
-                TaskDialog td = new TaskDialog("Success")
-                {
-                    Title = "Incorrect line style",
-                    AllowCancellation = true,
-                    MainInstruction = "Retreive detail lines with incorrect line style",
-                    MainContent = $"{count} of {cS.Count} detail line(s) have incorrect line style.",
-                    MainIcon = TaskDialogIcon.TaskDialogIconInformation,
-                };
-                td.CommonButtons = TaskDialogCommonButtons.Ok;
-                td.Show();
-            }
-            else 
+            if (count == 0)
             {
                 // report result with task dialog
                 TaskDialog td = new TaskDialog("Fail 002")
@@ -180,7 +171,7 @@ namespace Change_Line_Type
         }
 
         // collect all graphic styles that follows standard. 
-        private static IEnumerable<GraphicsStyle> getAllCorrectGraphicStyle(Document doc, string lineStyleName)
+        private static IEnumerable<GraphicsStyle> GetAllCorrectGraphicStyle(Document doc, string lineStyleName)
         {
             IEnumerable<GraphicsStyle> targetedGraphicStyles = new FilteredElementCollector(doc)
                 .OfClass(typeof(GraphicsStyle))
@@ -212,7 +203,7 @@ namespace Change_Line_Type
         }
 
         // test whether the needed line style is existing in the project
-        private static IList<string> NameRequiredLineStyle(Document doc, IEnumerable<CurveElement> curves, IList<Autodesk.Revit.DB.Color> standarColorLst, IList<string> standarColorNameLst)
+        private static IList<string> NameRequiredLineStyle(Document doc, IEnumerable<CurveElement> curves, IList<Autodesk.Revit.DB.Color> standarColorLst, IList<string> standarColorNameLst, string strCull)
         {
             // declare empty IList to stor the Name of curve style
             IList<string> curveStyleNameLst = new List<string>();
@@ -241,31 +232,18 @@ namespace Change_Line_Type
                 string cClosestColorName = standarColorNameLst[cColorIndexInStandarColorLst];
                 cClosestColorNameLst.Add(cClosestColorName);
             }
+            
+            Debug.WriteLine($"{cClosestColorNameLst.Count} vs {cClosestColorNameLst.Count}");
 
-            #region test
             // zip everything together
             var zip = cWeightLst.Zip(cClosestColorNameLst, (cW, cC) => new { cW, cC }).Zip(cPatterNameLst, (t, cPN) => new { cWeight = t.cW, cColor = t.cC, cPatterName = cPN });
             
-            
-
             // get the proper names
             foreach (var data in zip)
             {
                 string curveStyleName = $"STM-EP{data.cWeight}-{data.cColor}-{data.cPatterName}";
                 curveStyleNameLst.Add(curveStyleName);
             }
-
-            TaskDialog td = new TaskDialog("Testing")
-            {
-                Title = "testing the modified name of the curves",
-                AllowCancellation = true,
-                MainInstruction = "review names below",
-                MainContent = $"{String.Join(Environment.NewLine, curveStyleNameLst)}",
-                MainIcon = TaskDialogIcon.TaskDialogIconInformation,
-            };
-            td.CommonButtons = TaskDialogCommonButtons.Ok;
-            td.Show();
-            #endregion
 
             return curveStyleNameLst;
         }
@@ -311,6 +289,7 @@ namespace Change_Line_Type
                         cPatternNamesLst.Add("SOLID");
                     }
                 }
+
             }
 
             return Tuple.Create(cWeightLst, cColorLst, cPatternNamesLst);
@@ -338,27 +317,43 @@ namespace Change_Line_Type
             return indexOfTheClosestColor;
         }
 
-        private static int TestIfBlackAndSolid(Autodesk.Revit.DB.Color cColor, string cPatterName)
-        {
-            int caseNum = 0;
+        private static IList<string> TrimString(IList<string> stringLst, string str)
+        { 
+            IList<string> result = new List<string>();
 
-            // check whether the line is black
-            int isBlack = 1;
-            if (cColor.Red != 0 | cColor.Green != 0 | cColor.Blue != 0)
+            foreach (string s in stringLst)
             {
-                isBlack = 0;
-            }
-            // check whether the line is solid
-            int isSolid = 1;
-            if (cPatterName != "solid")
-            {
-                isSolid = 0;
+                if (!String.IsNullOrWhiteSpace(s))
+                {
+                    if (!s.Contains(str))
+                    {
+                        result.Add(s);
+                    }
+                    else
+                    {
+                        int charLocation = s.IndexOf(str);
+
+                        Debug.WriteLine($"{charLocation}");
+
+                        if (Char.IsDigit(s, charLocation - 1) | Char.IsLetter(s, charLocation - 1))
+                        {
+                            string subStr = s.Replace(str, "");
+                            result.Add(subStr);
+                        }
+                        else
+                        {
+                            str = s[charLocation - 1] + str;
+                            string subStr = s.Replace(str, "");
+                            result.Add(subStr);
+                        }
+                    }
+
+                }
             }
 
-            caseNum = isBlack + isSolid + 1;
-
-            return caseNum;
+            return result;
         }
+
         #endregion
         /*
         // create line style following the nameing convention
