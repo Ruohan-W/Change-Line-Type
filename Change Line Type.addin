@@ -15,6 +15,6 @@
     <FullClassName>Change_Line_Type.App</FullClassName>
     <ClientId>1e8eaec2-f585-45c9-8c54-ca4e44162be8</ClientId>
     <VendorId>com.typepad.thebuildingcoder</VendorId>
-    <VendorDescription>The Building Coder, http://thebuildingcoder.typepad.com</VendorDescription>
+    <VendorDescription>Ruohan Wang, ruohan.wang@aecom.com </VendorDescription>
   </AddIn>
 </RevitAddIns>
