@@ -69,13 +69,13 @@ namespace Change_Line_Type
 
             if (targetedDetailCurvesCol.Any())
             {
-                NameLst = NameRequiredLineStyle(doc, targetedDetailCurve, standardColorLst, standardColorNameLst, standardColorNameLst[0]);
+                NameLst = NameRequiredLineStyle(doc, targetedDetailCurve, standardColorLst, standardColorNameLst);
             }
 
             NameLst = TrimString(NameLst, standardColorNameLst[0]);
             NameLst = TrimString(NameLst, "SOLID");
 
-            TaskDialog td = new TaskDialog("Testing")
+            TaskDialog td1 = new TaskDialog("Testing 001")
             {
                 Title = "testing the modified name of the curves",
                 AllowCancellation = true,
@@ -83,13 +83,12 @@ namespace Change_Line_Type
                 MainContent = $"{String.Join(Environment.NewLine, NameLst)}",
                 MainIcon = TaskDialogIcon.TaskDialogIconInformation,
             };
-            td.CommonButtons = TaskDialogCommonButtons.Ok;
-            td.Show();
+            td1.CommonButtons = TaskDialogCommonButtons.Ok;
+            td1.Show();
 
-            /*
+            
             // get all avaliable graphic styles for detail lines that follow the naming convention
-            IEnumerable<GraphicsStyle> existingTargetedGrpahicStyle = getAllCorrectGraphicStyle(doc, lineStyleNamingConvention);
-            */
+            IEnumerable<GraphicsStyle> existingTargetedGrpahicStyle = GetAllCorrectGraphicStyle(doc, lineStyleNamingConvention);
 
             return Result.Succeeded;
         }
@@ -173,37 +172,41 @@ namespace Change_Line_Type
         // collect all graphic styles that follows standard. 
         private static IEnumerable<GraphicsStyle> GetAllCorrectGraphicStyle(Document doc, string lineStyleName)
         {
+            ElementCategoryFilter filter = new ElementCategoryFilter(BuiltInCategory.OST_Lines);
+
             IEnumerable<GraphicsStyle> targetedGraphicStyles = new FilteredElementCollector(doc)
-                .OfClass(typeof(GraphicsStyle))
-                .Cast<GraphicsStyle>()
-                .Where(gs => gs.GraphicsStyleCategory.ToString().Contains(lineStyleName));
+                .OfClass(typeof(GraphicsStyle)).Cast<GraphicsStyle>()
+                .Where(gs => gs.GraphicsStyleCategory.Parent != null)
+                .Where(gs => gs.GraphicsStyleCategory.Parent.Parent == null);
 
-            // report result with task dialog
-            if (targetedGraphicStyles != null)
-            {
-                string graphicsStyleNamesConcatenate = string.Join(", ", targetedGraphicStyles);
+            IList<string> cGNameLst = new List<string>();
 
-                TaskDialog td = new TaskDialog("Success")
-                {
-                    Title = "avaliable graphic styles",
-                    AllowCancellation = true,
-                    MainContent = "found avaliable grphic styles",
-                    MainInstruction = $"{targetedGraphicStyles.Count()} availible graphic styles ({graphicsStyleNamesConcatenate}) of detail lines that follow the naming convention",
-                    MainIcon = TaskDialogIcon.TaskDialogIconInformation,
-                };
-                td.CommonButtons = TaskDialogCommonButtons.Ok;
-                td.Show();
-            }
-            else 
+            foreach (GraphicsStyle gS in targetedGraphicStyles)
             { 
+                Category cat = gS.GraphicsStyleCategory;
+                BuiltInCategory catBuiltIn = (BuiltInCategory)cat.Id.IntegerValue;
 
+                if (!catBuiltIn.ToString().StartsWith("OST"))
+                {
+                    Category catParent = gS.GraphicsStyleCategory.Parent;
+                    BuiltInCategory catPBuiltIn = (BuiltInCategory)catParent.Id.IntegerValue;
+
+                    if (catPBuiltIn == BuiltInCategory.OST_Lines)
+                    {
+                        cGNameLst.Add(gS.Name);
+                    }
+                }
             }
+          
+            cGNameLst = cGNameLst.Distinct().ToList();
+
+            Debug.WriteLine($"all {cGNameLst.Count} line type hopefully: {Environment.NewLine}{String.Join(Environment.NewLine, cGNameLst)}");
 
             return targetedGraphicStyles;
         }
 
         // test whether the needed line style is existing in the project
-        private static IList<string> NameRequiredLineStyle(Document doc, IEnumerable<CurveElement> curves, IList<Autodesk.Revit.DB.Color> standarColorLst, IList<string> standarColorNameLst, string strCull)
+        private static IList<string> NameRequiredLineStyle(Document doc, IEnumerable<CurveElement> curves, IList<Autodesk.Revit.DB.Color> standarColorLst, IList<string> standarColorNameLst)
         {
             // declare empty IList to stor the Name of curve style
             IList<string> curveStyleNameLst = new List<string>();
@@ -218,7 +221,7 @@ namespace Change_Line_Type
             IList<string> cPatterNameLst = cDataLst.Item3;
 
             // convert colors to the ones in the standard
-            // declare empty placeholder for the closest colors in the standar
+            // declare empty placeholder for the closest colors in the standard
             IList<Autodesk.Revit.DB.Color> cClosestColorLst = new List<Autodesk.Revit.DB.Color>();
             IList<string> cClosestColorNameLst = new List<string>();
 
@@ -232,8 +235,6 @@ namespace Change_Line_Type
                 string cClosestColorName = standarColorNameLst[cColorIndexInStandarColorLst];
                 cClosestColorNameLst.Add(cClosestColorName);
             }
-            
-            Debug.WriteLine($"{cClosestColorNameLst.Count} vs {cClosestColorNameLst.Count}");
 
             // zip everything together
             var zip = cWeightLst.Zip(cClosestColorNameLst, (cW, cC) => new { cW, cC }).Zip(cPatterNameLst, (t, cPN) => new { cWeight = t.cW, cColor = t.cC, cPatterName = cPN });
@@ -271,11 +272,7 @@ namespace Change_Line_Type
 
                 // get name of the curve's pattern in string format
                 ElementId cPatternId = cG.GraphicsStyleCategory.GetLinePatternId(GraphicsStyleType.Projection);
-                if (cPatternId == null)
-                {
-                    Debug.WriteLine($"Alert: find null cPaternId !!!!!!!!!!!!!");
-                }
-                else
+                if (cPatternId != null)
                 {
                     LinePatternElement cPattern = (LinePatternElement)doc.GetElement(cPatternId);
                     if (cPattern != null)
@@ -285,11 +282,9 @@ namespace Change_Line_Type
                     }
                     else
                     {
-                        Debug.WriteLine($"Alert: find null cPaternName !!!!!!!!!!!!!");
                         cPatternNamesLst.Add("SOLID");
                     }
                 }
-
             }
 
             return Tuple.Create(cWeightLst, cColorLst, cPatternNamesLst);
@@ -332,8 +327,6 @@ namespace Change_Line_Type
                     else
                     {
                         int charLocation = s.IndexOf(str);
-
-                        Debug.WriteLine($"{charLocation}");
 
                         if (Char.IsDigit(s, charLocation - 1) | Char.IsLetter(s, charLocation - 1))
                         {
