@@ -92,9 +92,11 @@ namespace Change_Line_Type
             #endregion
 
             // get all avaliable graphic styles for detail lines that follow the naming convention
-            IEnumerable<GraphicsStyle> existingTargetedGrpahicStyle = GetAllCorrectGraphicStyle(doc);
+            Tuple<IEnumerable<GraphicsStyle>, IList<string>> existingTargetedGrpahicStylesAndNames = GetAllCorrectGraphicStyle(doc);
+            IEnumerable<GraphicsStyle> existingTargetedGrpahicStyles = existingTargetedGrpahicStylesAndNames.Item1; // This is 
+            IList<string> existingTargetedGrpahicStyleNames = existingTargetedGrpahicStylesAndNames.Item2;
 
-            
+            RemapCurveData(doc, targetedDetailCurve, NameLst, existingTargetedGrpahicStyleNames, standardColorLst);
 
             return Result.Succeeded;
         }
@@ -176,7 +178,7 @@ namespace Change_Line_Type
         }
 
         // collect all graphic styles that follows standard. 
-        private static IEnumerable<GraphicsStyle> GetAllCorrectGraphicStyle(Document doc)
+        private static Tuple<IEnumerable<GraphicsStyle>, IList<string>>  GetAllCorrectGraphicStyle(Document doc)
         {
             ElementCategoryFilter filter = new ElementCategoryFilter(BuiltInCategory.OST_Lines);
 
@@ -206,12 +208,10 @@ namespace Change_Line_Type
           
             cGNameLst = cGNameLst.Distinct().ToList();
 
-            Debug.WriteLine($"all {cGNameLst.Count} line type hopefully: {Environment.NewLine}{String.Join(Environment.NewLine, cGNameLst)}");
-
-            return targetedGraphicStyles;
+            return Tuple.Create(targetedGraphicStyles, cGNameLst);
         }
 
-        // test whether the needed line style is existing in the project
+        // check whether the needed line style is existing in the project
         private static IList<string> NameRequiredLineStyle(Document doc, IEnumerable<CurveElement> curves, IList<Autodesk.Revit.DB.Color> standarColorLst, IList<string> standarColorNameLst)
         {
             // declare empty IList to stor the Name of curve style
@@ -255,21 +255,40 @@ namespace Change_Line_Type
             return curveStyleNameLst;
         }
 
-        //#####
         // input curve elements, correct names of curve element, all correct names in the file
+        private void RemapCurveData(Document doc, IEnumerable<CurveElement> detailLines, IList<string> detailLinesNameLst, IList<string> existingTargetedGrpahicStyleNames, IList<Autodesk.Revit.DB.Color> standardColorLst)
+        {
+            IList<CurveElement> cLst = new List<CurveElement>();
 
-        // if correct name of curve element is in the collection of all correct names in the file
+            int cCount = detailLines.Count();
+            for (int i = 0; i < cCount; i++)
+            {
+                CurveElement c = detailLines.ToList()[i];
+                string cName = detailLinesNameLst[i];
+
+                // if correct name of curve element is in the collection of all correct names in the file
+                if (existingTargetedGrpahicStyleNames.Contains(detailLinesNameLst[i]))
+                {
+                    // change the line style of curve
+                    CurveElement cModified = SetLineStyle(doc, c, cName);
+                    cLst.Add(cModified);
+                }
+                // if correct name of curve element is NOT in the collection of all correct names in the file
+                else
+                {
+                    // create new line tyle is correct line style name
+                    CreateLineStyle(doc, c, cName, standardColorLst);
+                    // change the line style of the curve
+                    CurveElement cModified = SetLineStyle(doc, c, cName);
+                    cLst.Add(cModified);
+                }
+            }
+
+            Debug.WriteLine($"Modified {cCount} of detail lines according to graphic standard for this project: {Environment.NewLine}{String.Join(Environment.NewLine, detailLinesNameLst)}");
+        }
+
         // change the line style of curve
-
-        // if correct name of curve element is NOT in the collection of all correct names in the file
-        // create new line tyle is correct line style name
-        // change the line style of the curve
-
-        // output new curve element
-        //#####
-
-        // change the line style of curve
-        private static CurveElement SetLineStyle(CurveElement c, string cLineStyleName)
+        private static CurveElement SetLineStyle(Document doc, CurveElement c, string cLineStyleName)
         {
             // find the graphic style with correct name
             // get all graphic style
@@ -279,7 +298,21 @@ namespace Change_Line_Type
                 {
                     if (s.GraphicsStyleType == GraphicsStyleType.Projection)
                     {
-                        c.LineStyle = s;
+                        try
+                        {
+                            using (Transaction t = new Transaction(doc, "modfiy graphic style for line"))
+                            {
+                                t.Start();
+
+                                c.LineStyle = s;
+
+                                t.Commit();
+                            };
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.WriteLine(e.Message);
+                        }
                     }
                 }
             }
@@ -293,7 +326,7 @@ namespace Change_Line_Type
             Category cat = doc.Settings.Categories.get_Item(BuiltInCategory.OST_Lines);
 
             // get all the data from c
-            Tuple<int?, Autodesk.Revit.DB.Color, ElementId> cData = GetSingleCurveData(doc, c);
+            Tuple<int?, Autodesk.Revit.DB.Color, ElementId> cData = GetSingleCurveData(c);
 
             int? cWeight = cData.Item1;
             Autodesk.Revit.DB.Color cColor = cData.Item2;
@@ -318,11 +351,10 @@ namespace Change_Line_Type
 
                     t.Commit();
                 };
-
             }
-            catch (Exception ex)
+            catch (Exception e)
             { 
-                Debug.WriteLine(ex.Message);
+                Debug.WriteLine(e.Message);
             }
         }
         #endregion
@@ -336,7 +368,7 @@ namespace Change_Line_Type
             
             foreach (CurveElement c in curves)
             {
-                Tuple<int?, Autodesk.Revit.DB.Color, ElementId> cData= GetSingleCurveData(doc, c);
+                Tuple<int?, Autodesk.Revit.DB.Color, ElementId> cData= GetSingleCurveData(c);
                 
                 cWeightLst.Add(cData.Item1);
                 cColorLst.Add(cData.Item2);
@@ -360,7 +392,7 @@ namespace Change_Line_Type
             return Tuple.Create(cWeightLst, cColorLst, cPatternNamesLst);
         }
 
-        private static Tuple<int?, Autodesk.Revit.DB.Color, ElementId> GetSingleCurveData(Document doc, CurveElement c)
+        private static Tuple<int?, Autodesk.Revit.DB.Color, ElementId> GetSingleCurveData(CurveElement c)
         {
             // get graphic style
             GraphicsStyle cG = (GraphicsStyle)c.LineStyle;
@@ -432,8 +464,6 @@ namespace Change_Line_Type
 
             return result;
         }
-
         #endregion
-
     }
 }
