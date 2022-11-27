@@ -408,6 +408,7 @@ namespace Change_Line_Type
 
             return Tuple.Create(cWeight, cColor, cPatternId);
         }
+        
         private static int ColorDiff(Autodesk.Revit.DB.Color c1, Autodesk.Revit.DB.Color c2)
         {
             return (int)Math.Sqrt((c1.Red - c2.Red)* (c1.Red - c2.Red)
