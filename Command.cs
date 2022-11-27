@@ -93,9 +93,10 @@ namespace Change_Line_Type
 
             // get all avaliable graphic styles for detail lines that follow the naming convention
             Tuple<IEnumerable<GraphicsStyle>, IList<string>> existingTargetedGrpahicStylesAndNames = GetAllCorrectGraphicStyle(doc);
-            IEnumerable<GraphicsStyle> existingTargetedGrpahicStyles = existingTargetedGrpahicStylesAndNames.Item1; // This is 
+            IEnumerable<GraphicsStyle> existingTargetedGrpahicStyles = existingTargetedGrpahicStylesAndNames.Item1; // not used, but still want to have it there.
             IList<string> existingTargetedGrpahicStyleNames = existingTargetedGrpahicStylesAndNames.Item2;
 
+            // remap curve to correct line type name, line weight, color, and pattern
             RemapCurveData(doc, targetedDetailCurve, NameLst, existingTargetedGrpahicStyleNames, standardColorLst);
 
             return Result.Succeeded;
