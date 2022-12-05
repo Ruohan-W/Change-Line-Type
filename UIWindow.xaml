@@ -5,13 +5,22 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Change_Line_Type"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="450" d:DesignWidth="800" Title="Change Line Style">
     <Border Padding="10">
         
         <StackPanel>
             <StackPanel>
                 <TextBlock Text="Graphic Standard" FontWeight="Bold" Margin="0,10"/>
-                <TextBlock Text="Curve Naming Convention:"/>
+                <TextBlock Foreground="DarkGray"> 
+                    <Run Foreground="Black" Text="Naming Convention: " />
+                    <Run Text="{Binding Prefix}" Name="prefix"/><!--
+                    --><Run FontStyle="Italic" Text="{Binding ComboBox1}" />
+                    <Run Foreground="Black" Text="{Binding Separator1}"/><!--
+                    --><Run FontStyle="Italic" Text="{Binding ComboBox2}"/>
+                    <Run Foreground="Black" Text="{Binding Separator2}"/><!-- 
+                    --><Run FontStyle="Italic" Text="{Binding ComboBox3}"/>
+                    <Run Text="{Binding Suffix}"/>
+                </TextBlock>
                 <Grid Margin="0,10,0 15">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -22,26 +31,25 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-
-                    <TextBox Grid.Column="0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Center"/>
-                    <ComboBox SelectedIndex="0" Grid.Column="1" Padding="5" Margin="10,0">
+                    <TextBox Grid.Column="0" TextWrapping="Wrap" Text="{Binding Prefix, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+                    <ComboBox SelectedIndex="0" Grid.Column="1" Padding="5" Margin="10,0" Text="{Binding ComboBox1}">
                         <ComboBoxItem>line weight</ComboBoxItem>
                         <ComboBoxItem>line color</ComboBoxItem>
                         <ComboBoxItem>line pattern</ComboBoxItem>
                     </ComboBox>
-                    <TextBox Grid.Column="2" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Center"/>
-                    <ComboBox SelectedIndex="1" Grid.Column="3" Padding="5" Margin="10,0">
+                    <TextBox Grid.Column="2" TextWrapping="Wrap" Text="{Binding Separator1, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+                    <ComboBox SelectedIndex="1" Grid.Column="3" Padding="5" Margin="10,0" Text="{Binding ComboBox2}">
                         <ComboBoxItem>line weight</ComboBoxItem>
                         <ComboBoxItem>line color</ComboBoxItem>
                         <ComboBoxItem>line pattern</ComboBoxItem>
                     </ComboBox>
-                    <TextBox Grid.Column="4" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Center"/>
-                    <ComboBox SelectedIndex="2" Grid.Column="5" Padding="5" Margin="10,0">
+                    <TextBox Grid.Column="4" TextWrapping="Wrap" Text="{Binding Separator2, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+                    <ComboBox SelectedIndex="2" Grid.Column="5" Padding="5" Margin="10,0" Text="{Binding ComboBox3}">
                         <ComboBoxItem>line weight</ComboBoxItem>
                         <ComboBoxItem>line color</ComboBoxItem>
                         <ComboBoxItem>line pattern</ComboBoxItem>
                     </ComboBox>
-                    <TextBox Grid.Column="6" TextWrapping="Wrap" Text="TextBox" Width="120" VerticalAlignment="Center"/>
+                    <TextBox Grid.Column="6" TextWrapping="Wrap" Text="{Binding Suffix, UpdateSourceTrigger=PropertyChanged}" Width="120" VerticalAlignment="Center"/>
 
                 </Grid>
                 <TextBlock Text="Allowed Color Choice:" Margin="0,0,0,10"/>

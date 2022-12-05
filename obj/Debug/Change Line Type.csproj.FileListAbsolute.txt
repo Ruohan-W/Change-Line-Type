@@ -6,3 +6,8 @@ C:\Users\ruohan.wang\source\repos\Change Line Type\obj\Debug\Change Line Type.cs
 C:\Users\ruohan.wang\source\repos\Change Line Type\obj\Debug\Change Line Type.csproj.CoreCompileInputs.cache
 C:\Users\ruohan.wang\source\repos\Change Line Type\obj\Debug\Change Line Type.dll
 C:\Users\ruohan.wang\source\repos\Change Line Type\obj\Debug\Change Line Type.pdb
+C:\Users\ruohan.wang\source\repos\Change Line Type\obj\Debug\UIWindow.g.cs
+C:\Users\ruohan.wang\source\repos\Change Line Type\obj\Debug\Change Line Type_MarkupCompile.cache
+C:\Users\ruohan.wang\source\repos\Change Line Type\obj\Debug\Change Line Type_MarkupCompile.lref
+C:\Users\ruohan.wang\source\repos\Change Line Type\obj\Debug\UIWindow.baml
+C:\Users\ruohan.wang\source\repos\Change Line Type\obj\Debug\Change Line Type.g.resources

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,11 +20,16 @@ namespace Change_Line_Type
     /// <summary>
     /// Interaction logic for UIWindow.xaml
     /// </summary>
-    public partial class UIWindow : UserControl
+    public partial class UIWindow : Window
     {
-        public UIWindow()
+        public UIDocument uidoc { get; }
+        public Document doc { get; }
+        public UIWindow(UIDocument UiDoc)
         {
+            uidoc = UiDoc;
+            doc = UiDoc.Document;
             InitializeComponent();
+            Title = "Change Line Style";
         }
     }
 }
