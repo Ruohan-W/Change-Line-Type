@@ -27,6 +27,9 @@ namespace Change_Line_Type
             Application app = uiapp.Application;
             Document doc = uidoc.Document;
 
+            // initialized the WFP interface - UIWindow
+            InitializeInterface(uidoc, doc, app);
+
             #region inputs from User interface (later)
             // declare standar line style formate
             string lineStyleNamingConvention = "STM-EP";
@@ -93,9 +96,10 @@ namespace Change_Line_Type
 
             // get all avaliable graphic styles for detail lines that follow the naming convention
             Tuple<IEnumerable<GraphicsStyle>, IList<string>> existingTargetedGrpahicStylesAndNames = GetAllCorrectGraphicStyle(doc);
-            IEnumerable<GraphicsStyle> existingTargetedGrpahicStyles = existingTargetedGrpahicStylesAndNames.Item1; // This is 
+            IEnumerable<GraphicsStyle> existingTargetedGrpahicStyles = existingTargetedGrpahicStylesAndNames.Item1; // not used, but still want to have it there.
             IList<string> existingTargetedGrpahicStyleNames = existingTargetedGrpahicStylesAndNames.Item2;
 
+            // remap curve to correct line type name, line weight, color, and pattern
             RemapCurveData(doc, targetedDetailCurve, NameLst, existingTargetedGrpahicStyleNames, standardColorLst);
 
             return Result.Succeeded;
@@ -464,6 +468,30 @@ namespace Change_Line_Type
             }
 
             return result;
+        }
+
+        private void InitializeInterface(UIDocument uidoc, Document doc, Application app)
+        {
+            try
+            {
+                UIWindow popWindow = new UIWindow(uidoc);
+
+                // get the lineStyleNamingConvention 
+                popWindow.Show();
+            }
+            catch (Exception e)
+            {
+                TaskDialog td = new TaskDialog("Fail")
+                {
+                    Title = "Error 003",
+                    AllowCancellation = true,
+                    MainInstruction = "Fail to initialize UI",
+                    MainContent = e.Message
+                };
+
+                td.CommonButtons = TaskDialogCommonButtons.Ok;
+                td.Show();
+            }
         }
         #endregion
     }
